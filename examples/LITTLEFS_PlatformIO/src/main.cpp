@@ -10,9 +10,10 @@
    test or else use the LITTLEFS plugin to create a partition
    https://github.com/lorol/arduino-esp32littlefs-plugin */
    
-#define FORMAT_LITTLEFS_IF_FAILED true
+#define FORMAT_LITTLEFS_IF_FAILED false
 
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
+    const char* nextFolder; 
     Serial.printf("Listing directory: %s\r\n", dirname);
 
     File root = fs.open(dirname);
@@ -40,7 +41,10 @@ void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
 #endif
 
             if(levels){
-                listDir(fs, file.name(), levels -1);
+                Serial.printf("      ..sanity check: %s\n", file.name());
+                nextFolder = '/' + file.name();
+                Serial.printf("      ..next dir: %s\n", nextFolder);
+                listDir(fs, nextFolder, levels -1);
             }
         } else {
             Serial.print("  FILE: ");
@@ -165,7 +169,7 @@ void writeFile2(fs::FS &fs, const char * path, const char * message){
     }
 
     Serial.printf("Writing file to: %s\r\n", path);
-    File file = fs.open(path, FILE_WRITE);
+    File file = fs.open(path, FILE_WRITE, true);
     if(!file){
         Serial.println("- failed to open file for writing");
         return;
@@ -267,6 +271,8 @@ void setup(){
 	createDir(LITTLEFS, "/mydir");
 	writeFile(LITTLEFS, "/mydir/hello2.txt", "Hello2");
   //writeFile(LITTLEFS, "/mydir/newdir2/newdir3/hello3.txt", "Hello3");
+    createDir(LITTLEFS, "/mydir/newdir2");
+    createDir(LITTLEFS, "/mydir/newdir2/newdir3");
     writeFile2(LITTLEFS, "/mydir/newdir2/newdir3/hello3.txt", "Hello3");
 	listDir(LITTLEFS, "/", 3);
 	deleteFile(LITTLEFS, "/mydir/hello2.txt");
